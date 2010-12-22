@@ -7,4 +7,4 @@ function VmBallooned? ($vm) {
 }
 
 # Usage:
-# get-view -viewtype virtualmachine | ?{ ballooned?( get-viobjectbyviview -moref $_.moref ) } | %{ $_.name }
+# get-view -viewtype virtualmachine | ?{ VmBallooned?( get-viobjectbyviview -moref $_.moref ) } | %{ $_.name }
