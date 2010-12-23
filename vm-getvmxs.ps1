@@ -1,4 +1,4 @@
-# Find all the VMX files on all of the Datastores and download them
+# Find all the VMX files on all of the Datastores and download them. This is currently unusable (at least on my system) as the speed of copying files from the datastores is intolerable. I can only think that this is a bug.
 
 function VmGetVMXs {
   # First find the .vmx files
@@ -29,11 +29,24 @@ function VmGetVMXs {
     $res
   }
 
-  # This is the bit that actually does the copying...
-  foreach ($file in $files) {
-    New-PSDrive -Location $ds_store -Name source -PSProvider VimDatastore -Root '\'
-    foreach ($vmx in $res) {
-      Copy-DatastoreItem ("source:/", ($vmx.fullpath -split " ")[1] -join "") -Destination ./
+  # Now group the VMX files by datastore so we don't have to constantly create and destroy PSDrives
+  $agg = @{}
+  $files | %{
+    if ($agg.containskey($_.datastore)) {
+      $agg[ $_.datastore ] += $_
+    }
+    else {
+      $agg[ $_.datastore ] = @()
+      $agg[ $_.datastore ] += $_
+    }
+  }
+
+  # This is the bit that actually does the copying... It's increadably slow
+  $drive = "source"
+  foreach ($ds in $agg.keys) {
+    New-PSDrive -Location $ds -Name $drive -PSProvider VimDatastore -Root '\'
+    foreach ($vmx in $agg[ $ds ]) {
+      Copy-DatastoreItem ("${source}:/", ($vmx.fullpath -split " ")[1] -join "") -Destination ./
     }
     Remove-PSDrive source
   }
